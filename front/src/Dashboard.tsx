@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react'
 import './Dashboard.css'
+import ResourceManager from './components/ResourceManager'
+import Overview from './components/Overview'
+import type { Resource } from './lib/resources'
+import FamilyRegistration from './components/FamilyRegistration'
 
-const pages = ['Tela Inicial', 'Usuários', 'Alunos', 'Pais/Responsáveis', 'Formulário de cadastro'] as const
+const pages = ['Tela Inicial', 'Usuários', 'Alunos', 'Pais/Responsáveis', 'Atividades', 'Formulário de cadastro'] as const
 type Page = typeof pages[number]
 type IconName = 'home' | 'users' | 'students' | 'family' | 'form' | 'menu' | 'exit' | 'chart' | 'cards' | 'table'
 const THEME_STORAGE_KEY = 'girassol-ipefe-theme'
 const VIEWS_STORAGE_KEY = 'girassol-ipefe-record-views'
-const icons: IconName[] = ['home', 'users', 'students', 'family', 'form']
+const icons: IconName[] = ['home', 'users', 'students', 'family', 'chart', 'form']
 
 function Icon({ name }: { name: IconName }) {
   const paths = {
@@ -24,7 +28,7 @@ function Icon({ name }: { name: IconName }) {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>
 }
 
-export default function Dashboard({ onLogout }: { onLogout: () => void }) {
+export default function Dashboard({ onLogout, token, username }: { onLogout: () => void; token: string; username: string }) {
   const [expanded, setExpanded] = useState(false)
   const [dark, setDark] = useState(() => {
     try {
@@ -47,7 +51,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
       const saved: unknown = JSON.parse(localStorage.getItem(VIEWS_STORAGE_KEY) ?? '{}')
       if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return {}
       return Object.fromEntries(Object.entries(saved).filter(([key, value]) =>
-        ['Usuários', 'Alunos', 'Pais/Responsáveis'].includes(key) &&
+        ['Usuários', 'Alunos', 'Pais/Responsáveis', 'Atividades'].includes(key) &&
         (value === 'cards' || value === 'table')
       ))
     } catch {
@@ -63,7 +67,10 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
   }, [views])
   const view = views[page] ?? 'cards'
-  const columns = page === 'Usuários' ? ['Nome', 'E-mail', 'Perfil', 'Status'] : page === 'Alunos' ? ['Nome', 'Responsável', 'Turma', 'Status'] : ['Nome', 'Contato', 'Aluno vinculado', 'Parentesco']
+  const [registrationOpen, setRegistrationOpen] = useState(false)
+  const [registrationNotice, setRegistrationNotice] = useState('')
+  const [registrationVersion, setRegistrationVersion] = useState(0)
+  const resource: Resource = page === 'Usuários' ? 'usuarios' : page === 'Alunos' ? 'criancas' : page === 'Atividades' ? 'atividades' : 'responsaveis'
 
   return <div className={`dashboard-shell ${dark ? 'theme-dark' : 'theme-light'} ${expanded ? 'is-expanded' : 'is-collapsed'}`}>
     <aside className="sidebar" aria-label="Menu principal">
@@ -73,23 +80,16 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
       </a>
       <div className="sidebar-controls"><button className="sidebar-toggle" type="button" onClick={() => setExpanded(!expanded)} aria-expanded={expanded} aria-controls="sidebar-navigation" aria-label={expanded ? 'Minimizar barra lateral' : 'Expandir barra lateral'} title={expanded ? 'Minimizar menu' : 'Expandir menu'}><Icon name="menu" /></button><button className="theme-toggle" type="button" onClick={() => setDark(!dark)} aria-label={dark ? 'Ativar tema claro' : 'Ativar tema escuro'} title={dark ? 'Ativar tema claro' : 'Ativar tema escuro'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{dark ? <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5" /></> : <path d="M21 13a9 9 0 0 1-10-10A9 9 0 1 0 21 13Z" />}</svg></button></div>
       <span className="nav-caption">PRINCIPAL</span>
-      <nav id="sidebar-navigation">{pages.map((item, index) => <button key={item} type="button" className={`nav-item ${page === item ? 'active' : ''}`} onClick={() => setPage(item)} aria-current={page === item ? 'page' : undefined} aria-label={item} title={item}><Icon name={icons[index]} /><span>{item}</span></button>)}</nav>
+      <nav id="sidebar-navigation">{pages.map((item, index) => <button key={item} type="button" className={`nav-item ${page === item ? 'active' : ''}`} onClick={() => { if (item === 'Formulário de cadastro') { setRegistrationNotice(''); setRegistrationOpen(true) } else setPage(item) }} aria-current={page === item ? 'page' : undefined} aria-label={item} title={item}><Icon name={icons[index]} /><span>{item}</span></button>)}</nav>
       <div className="sidebar-footer"><div className="institute-note"><span className="institute-dot" /> Cuidado, respeito e inclusão</div><button className="nav-item logout" type="button" onClick={onLogout} aria-label="Sair" title="Sair"><Icon name="exit" /><span>Sair</span></button></div>
     </aside>
     <div className="dashboard-main">
-      <header className="dashboard-header"><div><span className="header-institute">PROJETO GIRASSOL IPEFE</span><p>Portal institucional</p></div><span className="demo-badge"><span /> Ambiente de demonstração</span></header>
+      <header className="dashboard-header"><div><span className="header-institute">PROJETO GIRASSOL IPEFE</span><p>Portal institucional</p></div><span className="demo-badge"><span /> {username}</span></header>
       <main className="dashboard-content" id="main-content">
         <div className="page-heading"><div><div className="dashboard-eyebrow">{page === 'Tela Inicial' ? 'VISÃO GERAL' : 'GESTÃO DO INSTITUTO'}</div><h1>{page}</h1><p>{page === 'Tela Inicial' ? 'Acompanhe as informações do instituto em um só lugar.' : 'Um espaço para organizar as informações do instituto.'}</p></div><span className="page-marker"><Icon name={icons[pages.indexOf(page)]} /></span></div>
-        {page === 'Tela Inicial' ? <>
-          <section className="overview-grid" aria-label="Estatísticas e gráfico do instituto">
-            <div className="stat-grid">{[{ label: 'Alunos', icon: 'students' }, { label: 'Pais/Responsáveis', icon: 'family' }, { label: 'Usuários', icon: 'users' }].map((stat, index) => <article className="stat-card" key={stat.label}><div className="stat-card-top"><span className={`stat-icon tone-${index}`}><Icon name={stat.icon as IconName} /></span><span className="placeholder-tag">Sem dados</span></div><span className="stat-value" aria-label="Dados ainda não disponíveis">—</span><h2>{stat.label}</h2><p>Aguardando cadastros</p></article>)}</div>
-            <article className="chart-card"><div className="chart-heading"><div><h2>Visão dos cadastros</h2><p>Acompanhe a evolução dos registros do instituto.</p></div><span className="placeholder-tag">Sem dados</span></div><div className="chart-placeholder"><div className="chart-grid" aria-hidden="true" /><div className="chart-empty"><span><Icon name="chart" /></span><h3>Os dados vão aparecer aqui</h3><p>O gráfico será preenchido quando houver registros.</p></div></div><div className="chart-legend"><span /> Cadastros do instituto</div></article>
-          </section>
-          <div className="dashboard-info"><span className="info-symbol" aria-hidden="true">i</span><p>Estamos preparando este espaço. As estatísticas e o gráfico são placeholders, sem dados reais.</p></div>
-        </> : page !== 'Formulário de cadastro' ? <section className="records-section" aria-label={`Listagem de ${page}`}>
-          <div className="records-toolbar"><span className="records-count">Nenhum registro</span><div className="view-switch" role="group" aria-label="Modo de visualização">{(['cards', 'table'] as const).map(mode => <button type="button" key={mode} onClick={() => setViews(previous => ({ ...previous, [page]: mode }))} aria-pressed={view === mode} className={view === mode ? 'selected' : ''}><Icon name={mode} /><span>{mode === 'cards' ? 'Cards' : 'Tabela'}</span></button>)}</div></div>
-          {view === 'table' ? <div className="records-table-wrap"><table className="records-table"><caption className="sr-only">{page} — visualização em tabela</caption><thead><tr>{columns.map(column => <th key={column} scope="col">{column}</th>)}</tr></thead><tbody><tr><td colSpan={columns.length}><div className="records-empty"><Icon name={icons[pages.indexOf(page)]} /><h2>Nenhum cadastro por enquanto</h2><p>Os registros de {page.toLocaleLowerCase('pt-BR')} aparecerão nesta tabela.</p></div></td></tr></tbody></table></div> : <div className="records-empty records-card-empty"><Icon name={icons[pages.indexOf(page)]} /><h2>Nenhum cadastro por enquanto</h2><p>Os registros de {page.toLocaleLowerCase('pt-BR')} aparecerão aqui em cards.</p></div>}
-        </section> : <section className="page-placeholder"><span className="empty-page-icon"><Icon name={icons[pages.indexOf(page)]} /></span><h2>{page}</h2><p>Esta tela será preparada na próxima etapa.</p><span className="placeholder-tag">Em construção · sem dados</span></section>}
+        {registrationNotice && <p className="feedback success" role="status">{registrationNotice}</p>}
+        {page === 'Tela Inicial' ? <Overview key={registrationVersion} token={token} /> : <ResourceManager key={`${resource}-${registrationVersion}`} resource={resource} token={token} view={view} onViewChange={mode => setViews(previous => ({ ...previous, [page]: mode }))} />}
+        {registrationOpen && <FamilyRegistration token={token} onClose={() => setRegistrationOpen(false)} onSaved={() => { setRegistrationOpen(false); setRegistrationNotice('Cadastro e vínculos confirmados.'); setRegistrationVersion(value => value + 1) }} />}
         <footer className="dashboard-footer"><span>Projeto Girassol IPEFE</span><span>Cuidar de cada criança. Acolher cada história.</span></footer>
       </main>
     </div>

@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import './App.css'
 import Dashboard from './Dashboard'
+import { login, readSession, saveSession, SESSION_EXPIRED } from './lib/api'
 
 function EyeIcon({ open }: { open: boolean }) {
   return <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -11,16 +12,42 @@ function EyeIcon({ open }: { open: boolean }) {
 
 function App() {
   const [showPassword, setShowPassword] = useState(false)
-  const [loggedIn, setLoggedIn] = useState(false)
+  const [session, setSession] = useState(readSession)
+  const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    function expire() {
+      saveSession(null)
+      setSession(null)
+      setMessage('Sua sessão expirou. Entre novamente.')
+    }
+    window.addEventListener(SESSION_EXPIRED, expire)
+    const timer = session ? window.setTimeout(expire, Math.max(0, session.expiresAt - Date.now())) : undefined
+    return () => {
+      window.removeEventListener(SESSION_EXPIRED, expire)
+      window.clearTimeout(timer)
+    }
+  }, [session])
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (loading) return
+    const data = new FormData(event.currentTarget)
     setMessage('')
-    setLoggedIn(true)
+    setLoading(true)
+    try {
+      setSession(await login(String(data.get('username') || ''), String(data.get('password') || '')))
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Não foi possível entrar.')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  if (loggedIn) return <Dashboard onLogout={() => { setLoggedIn(false); setShowPassword(false) }} />
+  if (session) return <Dashboard token={session.accessToken} username={session.username} onLogout={() => {
+    saveSession(null); setSession(null); setShowPassword(false); setMessage('')
+  }} />
 
   return (
     <main className="login-page">
@@ -49,7 +76,7 @@ function App() {
               <button className="eye-button" type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} aria-pressed={showPassword}><EyeIcon open={showPassword} /></button>
             </div>
             <div className="forgot-row"><button className="text-button" type="button" onClick={() => setMessage('Para recuperar sua senha, entre em contato com a administração do instituto.')}>Esqueci minha senha</button></div>
-            <button className="submit-button" type="submit">Entrar <span aria-hidden="true">→</span></button>
+            <button className="submit-button" type="submit" disabled={loading}>{loading ? 'Entrando…' : 'Entrar'} <span aria-hidden="true">→</span></button>
             {message && <p className="form-message" role="status">{message}</p>}
           </form>
           <div className="access-note"><span aria-hidden="true">◇</span> Cuidado e acolhimento para crianças atípicas.</div>

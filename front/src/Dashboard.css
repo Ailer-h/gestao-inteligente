@@ -85,3 +85,68 @@
 .theme-dark .records-table th { background: #20232e; border-color: #303342; color: #dfe2f2; }
 .theme-dark .records-empty h2 { color: #dfe2f2; }
 
+.record-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.primary-button,.secondary-button,.danger-button { border:1px solid #d7dae7; border-radius:7px; padding:10px 14px; font-size:12px; background:#fff; color:#292d73; }
+.primary-button { background:#292d73; color:#fff; border-color:#292d73; }
+.danger-button { color:#a62b35; border-color:#e9c5ca; }
+button:disabled { opacity:.55; cursor:not-allowed; transform:none; }
+.feedback { border:1px solid #e4d8ae; background:#fff8e4; color:#68551c; border-radius:8px; padding:14px; font-size:13px; line-height:1.6; overflow-wrap:anywhere; }
+.feedback.error { background:#fff0f1; border-color:#edc5ca; color:#942b39; }
+.feedback.success { background:#edf8ef; border-color:#c2dfc9; color:#27663b; }
+.record-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr)); gap:16px; }
+.record-card,.record-editor { background:#fff; border:1px solid #e6e7ef; border-radius:12px; padding:22px; overflow-wrap:anywhere; }
+.record-card h2,.record-editor h2 { font-size:18px; margin:0 0 18px; letter-spacing:-.3px; }
+.record-card dl { margin:0 0 20px; }
+.record-card dl div { margin:12px 0; }
+.record-card dt { font-size:11px; color:#777b96; }
+.record-card dd { font-size:13px; margin:5px 0 0; }
+.record-editor { margin:0 0 24px; }
+.record-editor>p { font-size:13px; line-height:1.6; }
+.editor-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin:18px 0 24px; }
+.record-editor label { margin:0; font-size:12px; }
+.record-editor input,.record-editor select,.resource-selector select { width:100%; display:block; margin-top:8px; padding:12px; border:1px solid #d7dae7; border-radius:7px; background:#fff; color:#292d73; font-size:14px; min-height:44px; }
+.records-table tbody td { padding:15px 20px; border-top:1px solid #e6e7ef; font-size:12px; overflow-wrap:anywhere; max-width:280px; }
+.pagination { display:flex; justify-content:center; align-items:center; gap:15px; margin-top:22px; font-size:12px; }
+.delete-confirm { margin-bottom:20px; }
+.resource-selector { display:block; max-width:350px; font-size:13px; margin-bottom:24px; }
+.summary-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+.summary-chart { margin-top:24px; }
+.summary-bar { display:grid; grid-template-columns:130px minmax(0,1fr) 40px; gap:15px; align-items:center; margin-top:24px; font-size:12px; }
+.summary-bar>div { height:12px; background:#eceef6; border-radius:6px; overflow:hidden; }
+.summary-bar>div>span { display:block; height:100%; background:#f2bb16; border-radius:6px; }
+.theme-dark .record-card,.theme-dark .record-editor { background:#191b24; border-color:#303342; }
+.theme-dark .record-editor input,.theme-dark .record-editor select,.theme-dark .resource-selector select,.theme-dark .secondary-button { background:#20232e; color:#e1e3f1; border-color:#454a60; }
+.theme-dark .record-card dt { color:#a2a6bc; }
+.theme-dark .danger-button { background:#35232b; color:#ffb7c0; border-color:#70404b; }
+.theme-dark .feedback { background:#302c20; color:#eadba8; border-color:#61553c; }
+.theme-dark .feedback.error { background:#35232b; color:#ffb7c0; border-color:#70404b; }
+.theme-dark .feedback.success { background:#203329; color:#abdcbc; border-color:#3f6a4e; }
+.theme-dark .records-table tbody td { border-color:#303342; }
+.theme-dark .summary-bar>div { background:#303342; }
+.drawer { position:fixed; inset:0 0 0 auto; margin:0 0 0 auto; width:min(760px,100vw); max-width:100vw; height:100dvh; max-height:100dvh; border:0; border-radius:18px 0 0 18px; padding:0; background:#fff; color:#292d73; box-shadow:-16px 0 60px #11132b30; animation:drawer-in .2s ease-out; }
+.drawer::backdrop { background:#10112b70; }
+.drawer-header { display:flex; justify-content:space-between; align-items:center; gap:18px; padding:22px 28px; border-bottom:1px solid #e6e7ef; }
+.drawer-header h2 { font-size:22px; margin:0; letter-spacing:-.5px; }
+.drawer-content { overflow-y:auto; height:calc(100% - 90px); padding:24px 28px 40px; }
+.drawer .record-editor { border:0; padding:0; margin:0; }
+.drawer-actions { margin-top:24px; padding:18px 0; border-top:1px solid #e6e7ef; }
+.family-form fieldset,.relationship-selector { min-width:0; margin:20px 0; padding:18px; border:1px solid #d7dae7; border-radius:10px; }
+.family-form legend,.relationship-selector legend { font-weight:650; font-size:13px; padding:0 8px; }
+.family-form h3 { font-size:18px; margin:28px 0 12px; }
+.family-form h3 small { font-size:11px; color:#777b96; margin-left:8px; }
+.record-editor input:disabled,.record-editor select:disabled { background:#edeef3; color:#9295a8; cursor:not-allowed; }
+.relationship-selector p { font-size:12px; line-height:1.6; }
+.relationship-options { max-height:270px; overflow-y:auto; margin-top:14px; }
+.record-editor .relationship-option { display:flex; gap:12px; align-items:center; margin:0; padding:12px 4px; border-bottom:1px solid #e6e7ef; }
+.record-editor .relationship-option input { width:18px; height:18px; min-height:0; flex-shrink:0; margin:0; accent-color:#292d73; }
+.relationship-option small { display:block; font-size:11px; color:#777b96; margin-top:5px; }
+.summary-bar>span { overflow-wrap:anywhere; }
+.theme-dark .drawer { background:#191b24; color:#e1e3f1; color-scheme:dark; }
+.theme-dark .drawer-header,.theme-dark .drawer-actions,.theme-dark .family-form fieldset,.theme-dark .relationship-selector,.theme-dark .relationship-option { border-color:#454a60; }
+.theme-dark .record-editor input:disabled { background:#272933; color:#858ba3; }
+@keyframes drawer-in { from { transform:translateX(100%); } to { transform:translateX(0); } }
+@media(prefers-reduced-motion:reduce) { .drawer { animation:none; } }
+@media(max-width:600px) { .drawer { border-radius:0; } .drawer-content { padding:18px 16px 30px; } .drawer-header { padding:20px 16px; } .family-form fieldset { padding:12px; } }
+@media(max-width:900px) { .summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { .editor-grid { grid-template-columns:1fr; } .summary-grid { grid-template-columns:1fr; } .summary-bar { grid-template-columns:90px minmax(0,1fr) 30px; gap:8px; } .record-editor { padding:16px; } }
+
