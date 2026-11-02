@@ -5,7 +5,6 @@ import { displayValue, resources, toPayload } from '../lib/resources'
 import type { RecordData, Resource } from '../lib/resources'
 import Drawer from './Drawer'
 import PersonFields from './PersonFields'
-import FamilyRegistration from './FamilyRegistration'
 import RelationshipSelector from './RelationshipSelector'
 import type { RelationState } from './RelationshipSelector'
 import EnrollmentSelector from './EnrollmentSelector'
@@ -14,8 +13,8 @@ import { enrollmentPayload } from '../lib/enrollments'
 
 const PAGE_SIZE = 50
 
-export default function ResourceManager({ resource, token, view, onViewChange }: {
-  resource: Resource; token: string; view: 'cards' | 'table'
+export default function ResourceManager({ resource, token, view, onViewChange, cargo }: {
+  resource: Resource; token: string; cargo: number | null; view: 'cards' | 'table'
   onViewChange: (view: 'cards' | 'table') => void
 }) {
   const config = resources[resource]
@@ -66,8 +65,7 @@ export default function ResourceManager({ resource, token, view, onViewChange }:
     </div>
     {notice && <p className="feedback success" role="status">{notice}</p>}
     {error && <p className="feedback error" role="alert">{error}</p>}
-    {editor && !editor.record && (resource === 'criancas' || resource === 'responsaveis') ? <FamilyRegistration token={token} onClose={() => setEditor(null)} onSaved={() => { setEditor(null); setNotice('Cadastro e vínculos salvos com sucesso.'); refreshList() }} /> : editor && <RecordEditor key={editor.record?.id ?? 'new'} resource={resource} token={token} record={editor.record}
-      onCancel={() => setEditor(null)} onSaved={() => { setEditor(null); setNotice('Cadastro salvo com sucesso.'); refreshList() }} />}
+    {editor && <RecordEditor key={editor.record?.id ?? 'new'} resource={resource} token={token} cargo={cargo} record={editor.record} onCancel={() => setEditor(null)} onSaved={() => { setEditor(null); refreshList() }} />}
     {deleting && <div className="delete-confirm feedback" role="alert">
       <p>Excluir “{String(deleting.nome ?? deleting.username ?? deleting.id)}”? Esta ação não pode ser desfeita.{resource === 'usuarios' ? ' A conta de acesso será mantida.' : ''}</p>
       <div className="record-actions"><button className="danger-button" disabled={saving} onClick={remove}>{saving ? 'Excluindo…' : 'Confirmar exclusão'}</button><button className="secondary-button" disabled={saving} onClick={() => setDeleting(null)}>Cancelar</button></div>
@@ -82,12 +80,13 @@ export default function ResourceManager({ resource, token, view, onViewChange }:
   </section>
 
   function actions(record: RecordData) {
+    if (resource === 'usuarios' && !(cargo === 0 || (cargo === 1 && [2, 3].includes(Number(record.cargo))) || (cargo === 2 && record.cargo === 3))) return null
     return <div className="record-actions"><button className="secondary-button" disabled={saving} onClick={() => { setEditor({ record }); setError(''); setNotice('') }}>Editar</button><button className="danger-button" disabled={saving} onClick={() => { setDeleting(record); setError(''); setNotice('') }}>Excluir</button></div>
   }
 }
 
-function RecordEditor({ resource, token, record, onCancel, onSaved }: {
-  resource: Resource; token: string; record?: RecordData; onCancel: () => void; onSaved: () => void
+function RecordEditor({ resource, token, record, onCancel, onSaved, cargo }: {
+  resource: Resource; token: string; cargo: number | null; record?: RecordData; onCancel: () => void; onSaved: () => void
 }) {
   const fields = resources[resource].fields.filter(field => !record || !field.createOnly)
   const [values, setValues] = useState<Record<string, string>>(() => Object.fromEntries(fields.map(field => [field.name,
@@ -97,8 +96,8 @@ function RecordEditor({ resource, token, record, onCancel, onSaved }: {
   const [error, setError] = useState('')
   const [relations, setRelations] = useState<RelationState | null>(null)
   const [enrollments, setEnrollments] = useState<EnrollmentState | null>(null)
-  const hasEnrollments = resource === 'atividades' || (!!record && resource === 'criancas')
-  const hasRelations = !!record && (resource === 'criancas' || resource === 'responsaveis')
+  const hasEnrollments = resource === 'atividades' || resource === 'criancas'
+  const hasRelations = resource === 'responsaveis' || (!!record && resource === 'criancas')
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -131,8 +130,8 @@ function RecordEditor({ resource, token, record, onCancel, onSaved }: {
   return <Drawer title={record ? 'Editar cadastro' : 'Novo cadastro'} busy={saving} onClose={onCancel}>
     <form className="record-editor" onSubmit={submit} aria-label={record ? 'Editar cadastro' : 'Novo cadastro'}>
       {resource === 'usuarios' && !record && <p>Informe os dados para criar uma conta. O novo usuário poderá entrar com seu usuário e senha.</p>}
-      <PersonFields resource={resource} prefix="edit" values={values} onChange={setValues} disabled={saving} editing={!!record} />
-      {hasRelations && (resource === 'criancas' || resource === 'responsaveis') && record && <RelationshipSelector resource={resource} id={record.id} token={token} state={relations} onChange={setRelations} disabled={saving} />}
+      <PersonFields resource={resource} prefix="edit" values={values} onChange={setValues} disabled={saving} editing={!!record} allowedRoles={cargo === 0 ? [1, 2, 3] : cargo === 1 ? [2, 3] : [3]} />
+      {hasRelations && (resource === 'criancas' || resource === 'responsaveis') && <RelationshipSelector resource={resource} id={record?.id} token={token} state={relations} onChange={setRelations} disabled={saving} />}
       {hasEnrollments && (resource === 'criancas' || resource === 'atividades') && <EnrollmentSelector resource={resource} id={record?.id} token={token} disabled={saving} state={enrollments} onChange={setEnrollments} />}
       {error && <p className="feedback error" role="alert">{error}</p>}
       <div className="record-actions drawer-actions"><button className="primary-button" type="submit" disabled={saving || (hasRelations && (!relations || !!relations.error)) || (hasEnrollments && (!enrollments || !!enrollments.error))}>{saving ? 'Salvando…' : 'Salvar'}</button><button className="secondary-button" type="button" onClick={onCancel} disabled={saving}>Cancelar</button></div>

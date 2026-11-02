@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 from database import get_connection
 from main import app
-from security import require_user
+from security import require_user, require_profile
 
 
 async def request(method, path, body=None, headers=None):
@@ -44,6 +44,7 @@ class RoutesTest(unittest.TestCase):
         self.connection = MagicMock()
         app.dependency_overrides[get_connection] = lambda: self.connection
         app.dependency_overrides[require_user] = lambda: {'id': '12345678-1234-1234-1234-123456789abc'}
+        app.dependency_overrides[require_profile] = lambda: {'cargo': 0}
 
     def tearDown(self):
         app.dependency_overrides.clear()

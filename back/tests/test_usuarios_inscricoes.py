@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from database import get_connection
 from main import app
 from repositories import usuario, inscricao
-from security import require_user
+from security import require_user, require_profile
 
 
 ID = '12345678-1234-1234-1234-123456789abc'
@@ -24,6 +24,7 @@ class UsuarioInscricaoTest(unittest.TestCase):
         self.connection.execute.return_value.fetchone.return_value = None
         app.dependency_overrides[get_connection] = lambda: self.connection
         app.dependency_overrides[require_user] = lambda: {'id': ID}
+        app.dependency_overrides[require_profile] = lambda: {'id': ID, 'cargo': 0}
         self.client = TestClient(app)
 
     def tearDown(self):
@@ -127,3 +128,19 @@ class UsuariosOcultosTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class PermissionRulesTest(unittest.TestCase):
+    def test_role_matrix(self):
+        from fastapi import HTTPException
+        from security import check_managed_role, require_user_manager
+        for actor in (0, 1, 2, 3):
+            for target in (0, 1, 2, 3):
+                allowed = target in {0: (1, 2, 3), 1: (2, 3), 2: (3,)}.get(actor, ())
+                if allowed:
+                    check_managed_role({'cargo': actor}, target)
+                else:
+                    with self.assertRaises(HTTPException):
+                        check_managed_role({'cargo': actor}, target)
+        with self.assertRaises(HTTPException):
+            require_user_manager({'cargo': 3})

@@ -6,7 +6,7 @@ from repositories import crianca as repository
 from repositories import vinculo
 from repositories import inscricao
 from schemas.inscricao import InscricaoRead
-from schemas.crianca import CriancaCreate, CriancaRead, CriancaUpdate
+from schemas.crianca import CriancaCadastro, CriancaRead, CriancaUpdate
 from schemas.responsavel import ResponsavelRead
 
 
@@ -45,8 +45,12 @@ def consultar(id: int, connection: Connection = Depends(get_connection)):
 
 
 @router.post('', response_model=CriancaRead, status_code=201)
-def incluir(body: CriancaCreate, connection: Connection = Depends(get_connection)):
-    return repository.incluir(connection, body.model_dump())
+def incluir(body: CriancaCadastro, connection: Connection = Depends(get_connection)):
+    with connection.transaction():
+        record = repository.incluir(connection, body.model_dump(exclude={'atividades'}))
+        if body.atividades:
+            inscricao.substituir(connection, 'crianca', record['id'], [item.model_dump() for item in body.atividades])
+        return record
 
 
 @router.patch('/{id}', response_model=CriancaRead)

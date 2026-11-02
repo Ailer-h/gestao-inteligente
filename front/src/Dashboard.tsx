@@ -3,6 +3,7 @@ import './Dashboard.css'
 import ResourceManager from './components/ResourceManager'
 import Overview from './components/Overview'
 import type { Resource } from './lib/resources'
+import { apiRequest } from './lib/api'
 import FamilyRegistration from './components/FamilyRegistration'
 
 const pages = ['Tela Inicial', 'Usuários', 'Alunos', 'Pais/Responsáveis', 'Atividades', 'Formulário de cadastro'] as const
@@ -29,6 +30,13 @@ function Icon({ name }: { name: IconName }) {
 }
 
 export default function Dashboard({ onLogout, token, username }: { onLogout: () => void; token: string; username: string }) {
+  const [cargo, setCargo] = useState<number | null>(null)
+  useEffect(() => {
+    const controller = new AbortController()
+    apiRequest<{ cargo: number }>('/auth/me', { signal: controller.signal }, token)
+      .then(profile => setCargo(profile.cargo)).catch(() => {})
+    return () => controller.abort()
+  }, [token])
   const [expanded, setExpanded] = useState(false)
   const [dark, setDark] = useState(() => {
     try {
@@ -80,7 +88,7 @@ export default function Dashboard({ onLogout, token, username }: { onLogout: () 
       </a>
       <div className="sidebar-controls"><button className="sidebar-toggle" type="button" onClick={() => setExpanded(!expanded)} aria-expanded={expanded} aria-controls="sidebar-navigation" aria-label={expanded ? 'Minimizar barra lateral' : 'Expandir barra lateral'} title={expanded ? 'Minimizar menu' : 'Expandir menu'}><Icon name="menu" /></button><button className="theme-toggle" type="button" onClick={() => setDark(!dark)} aria-label={dark ? 'Ativar tema claro' : 'Ativar tema escuro'} title={dark ? 'Ativar tema claro' : 'Ativar tema escuro'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{dark ? <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5" /></> : <path d="M21 13a9 9 0 0 1-10-10A9 9 0 1 0 21 13Z" />}</svg></button></div>
       <span className="nav-caption">PRINCIPAL</span>
-      <nav id="sidebar-navigation">{pages.map((item, index) => <button key={item} type="button" className={`nav-item ${page === item ? 'active' : ''}`} onClick={() => { if (item === 'Formulário de cadastro') { setRegistrationNotice(''); setRegistrationOpen(true) } else setPage(item) }} aria-current={page === item ? 'page' : undefined} aria-label={item} title={item}><Icon name={icons[index]} /><span>{item}</span></button>)}</nav>
+      <nav id="sidebar-navigation">{pages.map((item, index) => index === 1 && (cargo === null || cargo === 3) ? null : <button key={item} type="button" className={`nav-item ${page === item ? 'active' : ''}`} onClick={() => { if (item === 'Formulário de cadastro') { setRegistrationNotice(''); setRegistrationOpen(true) } else setPage(item) }} aria-current={page === item ? 'page' : undefined} aria-label={item} title={item}><Icon name={icons[index]} /><span>{item}</span></button>)}</nav>
       <div className="sidebar-footer"><div className="institute-note"><span className="institute-dot" /> Cuidado, respeito e inclusão</div><button className="nav-item logout" type="button" onClick={onLogout} aria-label="Sair" title="Sair"><Icon name="exit" /><span>Sair</span></button></div>
     </aside>
     <div className="dashboard-main">
@@ -88,7 +96,7 @@ export default function Dashboard({ onLogout, token, username }: { onLogout: () 
       <main className="dashboard-content" id="main-content">
         <div className="page-heading"><div><div className="dashboard-eyebrow">{page === 'Tela Inicial' ? 'VISÃO GERAL' : 'GESTÃO DO INSTITUTO'}</div><h1>{page}</h1><p>{page === 'Tela Inicial' ? 'Acompanhe as informações do instituto em um só lugar.' : 'Um espaço para organizar as informações do instituto.'}</p></div><span className="page-marker"><Icon name={icons[pages.indexOf(page)]} /></span></div>
         {registrationNotice && <p className="feedback success" role="status">{registrationNotice}</p>}
-        {page === 'Tela Inicial' ? <Overview key={registrationVersion} token={token} /> : <ResourceManager key={`${resource}-${registrationVersion}`} resource={resource} token={token} view={view} onViewChange={mode => setViews(previous => ({ ...previous, [page]: mode }))} />}
+        {page === 'Tela Inicial' ? <Overview key={registrationVersion} token={token} /> : <ResourceManager key={`${resource}-${registrationVersion}`} resource={resource} cargo={cargo} token={token} view={view} onViewChange={mode => setViews(previous => ({ ...previous, [page]: mode }))} />}
         {registrationOpen && <FamilyRegistration token={token} onClose={() => setRegistrationOpen(false)} onSaved={() => { setRegistrationOpen(false); setRegistrationNotice('Cadastro e vínculos confirmados.'); setRegistrationVersion(value => value + 1) }} />}
         <footer className="dashboard-footer"><span>Projeto Girassol IPEFE</span><span>Cuidar de cada criança. Acolher cada história.</span></footer>
       </main>

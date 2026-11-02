@@ -39,3 +39,7 @@ class CriancaUpdate(Atualizacao):
 
 class CriancaRead(CriancaCreate):
     id: int
+
+
+class CriancaCadastro(CriancaCreate):
+    atividades: list[Inscricao] = Field(default_factory=list, max_length=100)

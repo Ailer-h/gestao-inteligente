@@ -23,3 +23,7 @@ class ResponsavelUpdate(Atualizacao):
 
 class ResponsavelRead(ResponsavelCreate):
     id: int
+
+
+class ResponsavelCadastro(ResponsavelCreate):
+    criancas_ids: list[PositiveInt] = Field(default_factory=list, max_length=100)

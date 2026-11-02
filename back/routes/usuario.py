@@ -7,9 +7,10 @@ from database import get_connection
 from repositories import usuario as repository
 from schemas.usuario import UsuarioCreate, UsuarioRead, UsuarioUpdate
 from services.usuario import cadastrar
+from security import require_user_manager, check_managed_role
 
 
-router = APIRouter(prefix='/usuarios', tags=['usuarios'])
+router = APIRouter(prefix='/usuarios', tags=['usuarios'], dependencies=[Depends(require_user_manager)])
 
 
 @router.get('', response_model=list[UsuarioRead])
@@ -30,12 +31,19 @@ def consultar(id: UUID, connection: Connection = Depends(get_connection)):
 
 
 @router.post('', response_model=UsuarioRead, status_code=201)
-def incluir(body: UsuarioCreate, connection: Connection = Depends(get_connection)):
+def incluir(body: UsuarioCreate, connection: Connection = Depends(get_connection), profile = Depends(require_user_manager)):
+    check_managed_role(profile, body.cargo)
     return cadastrar(connection, body)
 
 
 @router.patch('/{id}', response_model=UsuarioRead)
-def editar(id: UUID, body: UsuarioUpdate, connection: Connection = Depends(get_connection)):
+def editar(id: UUID, body: UsuarioUpdate, connection: Connection = Depends(get_connection), profile = Depends(require_user_manager)):
+    target = repository.consultar(connection, id)
+    if target is None:
+        raise HTTPException(status_code=404, detail="Registro não encontrado.")
+    check_managed_role(profile, target["cargo"])
+    if body.cargo is not None:
+        check_managed_role(profile, body.cargo)
     data = body.model_dump(exclude_unset=True)
     if not data:
         raise HTTPException(status_code=422, detail='Informe ao menos um campo para editar.')
@@ -46,7 +54,11 @@ def editar(id: UUID, body: UsuarioUpdate, connection: Connection = Depends(get_c
 
 
 @router.delete('/{id}', status_code=204, response_class=Response)
-def excluir(id: UUID, connection: Connection = Depends(get_connection)):
+def excluir(id: UUID, connection: Connection = Depends(get_connection), profile = Depends(require_user_manager)):
+    target = repository.consultar(connection, id)
+    if target is None:
+        raise HTTPException(status_code=404, detail="Registro não encontrado.")
+    check_managed_role(profile, target["cargo"])
     record = repository.excluir(connection, id)
     if record is None:
         raise HTTPException(status_code=404, detail='Registro não encontrado.')

@@ -111,6 +111,26 @@ button:disabled { opacity:.55; cursor:not-allowed; transform:none; }
 .resource-selector { display:block; max-width:350px; font-size:13px; margin-bottom:24px; }
 .summary-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
 .summary-chart { margin-top:24px; }
+.summary-chart { --rank-top:#16804a; --rank-middle:#a87500; --rank-low:#c63838; }
+.summary-chart.ranking-colorblind { --rank-top:#005fcc; --rank-middle:#996800; --rank-low:#a64786; }
+.ranking-top { --rank-color:var(--rank-top); }
+.ranking-middle { --rank-color:var(--rank-middle); }
+.ranking-low { --rank-color:var(--rank-low); }
+.ranking-mode { flex-shrink:0; min-height:44px; white-space:normal; }
+.ranking-mode:focus-visible { outline:3px solid currentColor; outline-offset:3px; }
+.ranking-explanation { font-size:12px; line-height:1.6; }
+.ranking-legend { display:flex; flex-wrap:wrap; gap:12px 20px; padding:0; margin:16px 0; list-style:none; font-size:12px; }
+.ranking-legend li { display:flex; align-items:center; gap:6px; }
+.ranking-legend li>span { color:var(--rank-color); font-size:18px; }
+.ranking-category { display:block; margin-top:5px; font-size:11px; line-height:1.5; }
+.ranking-category>span { color:var(--rank-color); }
+.summary-bar.ranking-top>div>span,.summary-bar.ranking-middle>div>span,.summary-bar.ranking-low>div>span { background-color:var(--rank-color); }
+.ranking-colorblind .summary-bar.ranking-top>div>span { background-image:repeating-linear-gradient(90deg,transparent 0 10px,#ffffff80 10px 12px); }
+.ranking-colorblind .summary-bar.ranking-middle>div>span { background-image:repeating-linear-gradient(45deg,transparent 0 5px,#ffffff80 5px 7px); }
+.ranking-colorblind .summary-bar.ranking-low>div>span { background-image:radial-gradient(#ffffffb3 1px,transparent 1px); background-size:5px 5px; }
+.theme-dark .summary-chart { --rank-top:#5dd398; --rank-middle:#f2c44c; --rank-low:#ff8787; }
+.theme-dark .summary-chart.ranking-colorblind { --rank-top:#70b7ff; --rank-middle:#f2c44c; --rank-low:#e5a2d2; }
+@media(max-width:600px) { .ranking-mode { width:100%; } }
 .summary-bar { display:grid; grid-template-columns:130px minmax(0,1fr) 40px; gap:15px; align-items:center; margin-top:24px; font-size:12px; }
 .summary-bar>div { height:12px; background:#eceef6; border-radius:6px; overflow:hidden; }
 .summary-bar>div>span { display:block; height:100%; background:#f2bb16; border-radius:6px; }

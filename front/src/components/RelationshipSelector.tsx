@@ -6,7 +6,7 @@ import type { RecordData } from '../lib/resources'
 export interface RelationState { options: RecordData[]; selected: number[]; original: number[]; error?: string }
 
 export default function RelationshipSelector({ resource, id, token, disabled, state, onChange }: {
-  resource: 'criancas' | 'responsaveis'; id: string | number; token: string; disabled: boolean
+  resource: 'criancas' | 'responsaveis'; id?: string | number; token: string; disabled: boolean
   state: RelationState | null; onChange: Dispatch<SetStateAction<RelationState | null>>
 }) {
   const [search, setSearch] = useState('')
@@ -16,7 +16,7 @@ export default function RelationshipSelector({ resource, id, token, disabled, st
   useEffect(() => {
     const controller = new AbortController()
     async function load() {
-      const selected = await apiRequest<RecordData[]>(`/${resource}/${id}/${other}`, { signal: controller.signal }, token)
+      const selected = id === undefined ? [] : await apiRequest<RecordData[]>(`/${resource}/${id}/${other}`, { signal: controller.signal }, token)
       const options: RecordData[] = []
       for (let offset = 0; ; offset += 100) {
         const page = await apiRequest<RecordData[]>(`/${other}?limit=100&offset=${offset}`, { signal: controller.signal }, token)

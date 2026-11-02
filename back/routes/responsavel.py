@@ -5,7 +5,7 @@ from database import get_connection
 from repositories import responsavel as repository
 from repositories import vinculo
 from schemas.crianca import CriancaRead
-from schemas.responsavel import ResponsavelCreate, ResponsavelRead, ResponsavelUpdate
+from schemas.responsavel import ResponsavelCadastro, ResponsavelRead, ResponsavelUpdate
 
 
 router = APIRouter(prefix='/responsaveis', tags=['responsaveis'])
@@ -36,8 +36,12 @@ def consultar(id: int, connection: Connection = Depends(get_connection)):
 
 
 @router.post('', response_model=ResponsavelRead, status_code=201)
-def incluir(body: ResponsavelCreate, connection: Connection = Depends(get_connection)):
-    return repository.incluir(connection, body.model_dump())
+def incluir(body: ResponsavelCadastro, connection: Connection = Depends(get_connection)):
+    with connection.transaction():
+        record = repository.incluir(connection, body.model_dump(exclude={'criancas_ids'}))
+        if body.criancas_ids:
+            vinculo.substituir_criancas(connection, record['id'], body.criancas_ids)
+        return record
 
 
 @router.patch('/{id}', response_model=ResponsavelRead)

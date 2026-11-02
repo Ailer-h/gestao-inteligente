@@ -69,6 +69,10 @@ O Vite roda na porta 5173 e avisa se ela estiver ocupada. O backend permite CORS
 
 ## Integração frontend e backend
 
+O backend aquece um pool compartilhado de conexões em segundo plano na inicialização, antes mesmo do login. Cada processo mantém no mínimo 2 conexões e pode crescer até 5, com espera de até 10 segundos e fila de até 20 requisições. Ao terminar uma requisição, a transação recebe commit ou rollback e a conexão volta ao pool. O encerramento da API fecha o pool. Com vários workers, esses limites se multiplicam pela quantidade de processos.
+
+Após atualizar as dependências de `back/requirements.txt`, reinicie a API para ativar o pool. Para medir o aquecimento e a aquisição de conexões prontas com consultas de leitura, execute `python benchmark_pool.py` dentro de `back/`, usando o ambiente virtual do projeto. O pool reduz o custo de abrir conexões; a latência de rede, as consultas e a autenticação continuam compondo o tempo total da tela.
+
 Mantenha os dois servidores rodando em terminais separados. Acesse `http://localhost:5173` e entre com o username do perfil e a senha da conta no Supabase Auth.
 
 - O login envia username e senha para `/auth/login` e as requisições seguintes usam Bearer Token.

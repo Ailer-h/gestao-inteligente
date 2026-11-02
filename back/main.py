@@ -2,6 +2,7 @@ import os
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from database import database_lifespan
 
 from routes.atividade import router as atividade_router
 from routes.crianca import router as crianca_router
@@ -14,7 +15,7 @@ from routes.relatorio import router as relatorio_router
 from security import require_user
 
 
-app = FastAPI(title='Gestão Inteligente')
+app = FastAPI(title='Gestão Inteligente', lifespan=database_lifespan)
 
 app.add_middleware(
     CORSMiddleware,
